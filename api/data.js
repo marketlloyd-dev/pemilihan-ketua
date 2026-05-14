@@ -12,7 +12,7 @@ let db = {
     }
   ],
   settings: {
-    electionTitle: 'Pemilihan Ketua Komisariat',
+    electionTitle: 'Pemilihan Ketua Umum 2025',
     isElectionActive: true,
     electionEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   },
@@ -50,37 +50,48 @@ export default async function handler(req, res) {
     const now = new Date();
     const endTime = new Date(db.settings.electionEndTime);
     const isActive = db.settings.isElectionActive && now < endTime;
-    if (!isActive) return json(res, 400, { error: 'Pemilihan sudah ditutup' });
 
-    // Baca cookie voted_token dari header
+    // 1. Cek apakah pemilihan aktif
+    if (!isActive) {
+      // Jika pemilihan tidak aktif, hapus cookie voted_token agar tidak memblokir
+      res.setHeader(
+        'Set-Cookie',
+        'voted_token=; Path=/; Max-Age=0; SameSite=Lax; Secure; HttpOnly'
+      );
+      return json(res, 400, { error: 'Pemilihan sudah ditutup' });
+    }
+
+    // 2. Baca cookie voted_token dari header
     const cookieHeader = req.headers.cookie || '';
     const cookies = Object.fromEntries(
       cookieHeader.split('; ').map(c => c.split('='))
     );
+
+    // 3. Jika cookie voted_token sudah ada, tolak
     if (cookies.voted_token) {
-      return json(res, 400, { error: 'Mohon maaf, kanda telah memberikan suara' });
+      return json(res, 400, { error: 'Anda sudah memberikan suara (terdeteksi dari cookie)' });
     }
 
     const { candidateId } = req.body || {};
-    if (!candidateId) return json(res, 400, { error: 'Nomor Urut kandidat diperlukan' });
+    if (!candidateId) return json(res, 400, { error: 'ID kandidat diperlukan' });
 
     const idx = db.candidates.findIndex(c => c.id === candidateId);
     if (idx === -1) return json(res, 400, { error: 'Kandidat tidak ditemukan' });
 
-    // Catat suara (tanpa IP)
+    // 4. Catat suara
     db.candidates[idx].voteCount = (db.candidates[idx].voteCount || 0) + 1;
     db.votes.push({
       candidateId,
       timestamp: now.toISOString()
     });
 
-    // Set cookie tahan 1 tahun
+    // 5. Set cookie tahan 1 tahun (hanya berlaku selama pemilihan masih berjalan)
     res.setHeader(
       'Set-Cookie',
       'voted_token=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure; HttpOnly'
     );
 
-    return json(res, 200, { success: true, message: 'Terimakasih Sudah Memberikan Suara' });
+    return json(res, 200, { success: true, message: 'Suara berhasil!' });
   }
 
   return json(res, 405, { error: 'Method not allowed' });

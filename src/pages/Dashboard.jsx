@@ -26,7 +26,7 @@ export default function Dashboard() {
     <div className="pb-12">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-white text-center mb-6">
-          📊 {isActive ? 'Suara Sementara' : 'Hasil Akhir'}
+           {isActive ? 'Suara Sementara' : 'Hasil Akhir'}
         </h1>
 
         {/* Statistik */}

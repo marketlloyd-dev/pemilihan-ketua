@@ -46,7 +46,7 @@ export function AppProvider({ children }) {
   };
 
   const loginAdmin = (username, password) => {
-    if (username === 'admin' && password === 'admin123') {
+    if (username === 'jess' && password === '123') {
       setCurrentUser({ id: 'admin', name: 'Administrator', role: 'admin' });
       return true;
     }
