@@ -6,9 +6,10 @@ export default function Scan() {
   const [message, setMessage] = useState('');
   const [voting, setVoting] = useState(false);
 
+  // ---------- Ambil data kandidat ----------
   const fetchData = () => {
     fetch('/api/data')
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(setData)
       .catch(() => setMessage('Gagal memuat data'));
   };
@@ -19,23 +20,47 @@ export default function Scan() {
     return () => clearInterval(interval);
   }, []);
 
-  if (!data) return <div className="text-white text-center pt-20">Memuat data...</div>;
+  // ---------- Token perangkat (anti vote ganda) ----------
+  const getOrCreateToken = () => {
+    // Cek cookie yang sudah ada
+    const cookies = document.cookie.split('; ');
+    const votedCookie = cookies.find((c) => c.startsWith('voted_token='));
+    if (votedCookie) {
+      return votedCookie.split('=')[1];
+    }
 
-  const isActive = data.settings.isElectionActive && new Date(data.settings.electionEndTime) > new Date();
+    // Buat token baru (kombinasi userAgent + waktu + random)
+    const token = btoa(
+      navigator.userAgent +
+        Date.now() +
+        Math.random().toString(36).substring(2)
+    );
 
+    // Simpan di cookie selama 1 tahun
+    document.cookie = `voted_token=${token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+
+    return token;
+  };
+
+  // ---------- Kirim suara ----------
   const handleVote = async (candidateId) => {
     setVoting(true);
     setMessage('');
+
+    const token = getOrCreateToken();
+
     try {
       const res = await fetch('/api/data?action=vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateId }),
+        body: JSON.stringify({ candidateId, token }),
       });
+
       const result = await res.json();
+
       if (result.success) {
         setMessage('✅ Suara berhasil! Terima kasih.');
-        fetchData();
+        fetchData(); // perbarui jumlah suara
       } else {
         setMessage(`❌ ${result.error}`);
       }
@@ -45,6 +70,15 @@ export default function Scan() {
       setVoting(false);
     }
   };
+
+  // ---------- Tampilan ----------
+  if (!data) {
+    return <div className="text-white text-center pt-20">Memuat data...</div>;
+  }
+
+  const isActive =
+    data.settings.isElectionActive &&
+    new Date(data.settings.electionEndTime) > new Date();
 
   return (
     <div className="pb-12">
@@ -60,13 +94,20 @@ export default function Scan() {
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white mb-2">
           📋 <span className="text-emerald-400">Pilih</span> Kandidat
         </h1>
-        <p className="text-gray-300 text-lg font-medium">{data.settings.electionTitle}</p>
+        <p className="text-gray-300 text-lg font-medium">
+          {data.settings.electionTitle}
+        </p>
         <p className="text-gray-500 text-sm mt-1">
-          {isActive ? '🗳️ Pemilihan sedang berlangsung' : '⏰ Pemilihan telah ditutup'}
+          {isActive
+            ? '🗳️ Pemilihan sedang berlangsung'
+            : '⏰ Pemilihan telah ditutup'}
         </p>
         {!isActive && (
           <div className="mt-2">
-            <Link to="/dashboard" className="text-emerald-400 hover:underline font-semibold">
+            <Link
+              to="/dashboard"
+              className="text-emerald-400 hover:underline font-semibold"
+            >
               📊 Lihat Hasil Akhir →
             </Link>
           </div>
@@ -75,9 +116,13 @@ export default function Scan() {
 
       {/* Pesan setelah vote */}
       {message && (
-        <div className={`max-w-md mx-auto mb-6 p-4 rounded-xl text-center font-semibold ${
-          message.startsWith('✅') ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'
-        }`}>
+        <div
+          className={`max-w-md mx-auto mb-6 p-4 rounded-xl text-center font-semibold ${
+            message.startsWith('✅')
+              ? 'bg-emerald-900/30 text-emerald-300'
+              : 'bg-red-900/30 text-red-300'
+          }`}
+        >
           {message}
         </div>
       )}
@@ -103,18 +148,31 @@ export default function Scan() {
                   src={candidate.photo}
                   alt={candidate.name}
                   className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-emerald-500/40 shadow-xl mb-4"
-                  onError={(e) => { e.target.src = 'https://api.dicebear.com/9.x/avataaars/svg?seed=default&backgroundColor=b6e3f4'; }}
+                  onError={(e) => {
+                    e.target.src =
+                      'https://api.dicebear.com/9.x/avataaars/svg?seed=default&backgroundColor=b6e3f4';
+                  }}
                 />
               </div>
 
               {/* Nama */}
-              <h2 className="text-xl font-bold text-white text-center mb-1">{candidate.name}</h2>
-              <p className="text-emerald-400 text-sm text-center font-medium">Nomor Urut {candidate.nomorUrut}</p>
+              <h2 className="text-xl font-bold text-white text-center mb-1">
+                {candidate.name}
+              </h2>
+              <p className="text-emerald-400 text-sm text-center font-medium">
+                Nomor Urut {candidate.nomorUrut}
+              </p>
 
               {/* Visi Misi Singkat */}
               <div className="mt-3 text-sm text-gray-300 flex-1">
-                <p className="line-clamp-2"><span className="text-emerald-300 font-semibold">Visi:</span> {candidate.visi}</p>
-                <p className="line-clamp-2 mt-1 text-gray-400"><span className="text-emerald-300 font-semibold">Misi:</span> {candidate.misi}</p>
+                <p className="line-clamp-2">
+                  <span className="text-emerald-300 font-semibold">Visi:</span>{' '}
+                  {candidate.visi}
+                </p>
+                <p className="line-clamp-2 mt-1 text-gray-400">
+                  <span className="text-emerald-300 font-semibold">Misi:</span>{' '}
+                  {candidate.misi}
+                </p>
               </div>
 
               {/* Suara */}
