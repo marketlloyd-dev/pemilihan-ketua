@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Scan() {
   const [data, setData] = useState(null);
@@ -13,7 +14,7 @@ export default function Scan() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // polling setiap 5 detik
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -31,16 +32,16 @@ export default function Scan() {
     const result = await res.json();
     if (result.success) {
       setMessage('✅ Suara berhasil! Terima kasih.');
-      fetchData(); // refresh data
+      fetchData();
     } else {
       setMessage(`❌ ${result.error}`);
     }
   };
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white">
+    <div className="pb-12">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-white mt-6">
           📋 Pilih Kandidat
         </h1>
         <p className="text-gray-400 mt-2">{data.settings.electionTitle}</p>
@@ -50,11 +51,19 @@ export default function Scan() {
             {message}
           </p>
         )}
+        <div className="flex justify-center gap-4 mt-4">
+          <Link to="/dashboard" className="text-emerald-400 hover:underline text-sm">
+            📊 Lihat Hasil
+          </Link>
+          <Link to="/admin" className="text-blue-400 hover:underline text-sm">
+            ⚙️ Admin Panel
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {data.candidates.map((candidate) => (
-          <div key={candidate.id} className="bg-gray-800 rounded-2xl p-6 text-center">
+          <div key={candidate.id} className="bg-gray-800/80 backdrop-blur rounded-2xl p-6 text-center border border-emerald-700/30">
             <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
               {candidate.nomorUrut}
             </div>

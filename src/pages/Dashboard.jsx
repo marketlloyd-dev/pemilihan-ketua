@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -8,6 +8,12 @@ export default function Dashboard() {
       .then(res => res.json())
       .then(setData)
       .catch(() => console.log('Gagal fetch data'));
+    const interval = setInterval(() => {
+      fetch('/api/data')
+        .then(res => res.json())
+        .then(setData);
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   if (!data) return <div className="text-white text-center pt-20">Memuat dashboard...</div>;
@@ -17,23 +23,23 @@ export default function Dashboard() {
   const sorted = [...data.candidates].sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="pb-12">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-white text-center mb-8">
+        <h1 className="text-3xl font-bold text-white text-center mb-6">
           📊 {isActive ? 'Suara Sementara' : 'Hasil Akhir'}
         </h1>
 
         {/* Statistik */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gray-800 rounded-2xl p-4 text-center">
+          <div className="bg-gray-800 rounded-2xl p-4 text-center border border-emerald-700/30">
             <p className="text-gray-400 text-sm">Total Suara</p>
             <p className="text-2xl font-bold text-white">{totalVotes}</p>
           </div>
-          <div className="bg-gray-800 rounded-2xl p-4 text-center">
+          <div className="bg-gray-800 rounded-2xl p-4 text-center border border-emerald-700/30">
             <p className="text-gray-400 text-sm">Kandidat</p>
             <p className="text-2xl font-bold text-white">{data.candidates.length}</p>
           </div>
-          <div className="bg-gray-800 rounded-2xl p-4 text-center col-span-2 sm:col-span-1">
+          <div className="bg-gray-800 rounded-2xl p-4 text-center border border-emerald-700/30">
             <p className="text-gray-400 text-sm">Status</p>
             <p className={`text-lg font-bold ${isActive ? 'text-green-400' : 'text-red-400'}`}>
               {isActive ? 'Berlangsung' : 'Ditutup'}
@@ -46,7 +52,7 @@ export default function Dashboard() {
           {sorted.map((candidate, index) => {
             const percentage = totalVotes > 0 ? ((candidate.voteCount || 0) / totalVotes) * 100 : 0;
             return (
-              <div key={candidate.id} className="bg-gray-800 rounded-2xl p-4">
+              <div key={candidate.id} className="bg-gray-800 rounded-2xl p-4 border border-emerald-700/30">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
                   <img
