@@ -77,7 +77,7 @@ export default function Scan() {
               to="/dashboard"
               className="text-emerald-400 hover:underline font-semibold text-sm sm:text-base"
             >
-              📊 Lihat Hasil Akhir →
+              Lihat Hasil Akhir →
             </Link>
           </div>
         )}
@@ -146,7 +146,7 @@ export default function Scan() {
               {/* Suara */}
               <div className="mt-3 text-center">
                 <span className="bg-gray-700 px-3 py-1 rounded-full text-xs sm:text-sm text-gray-300">
-                  🗳️ {candidate.voteCount || 0} suara
+                   {candidate.voteCount || 0} suara
                 </span>
               </div>
 
@@ -168,7 +168,7 @@ export default function Scan() {
       {/* Link ke Dashboard */}
       <div className="text-center mt-8">
         <Link to="/dashboard" className="text-emerald-400 hover:underline text-sm sm:text-base">
-          📊 Lihat Hasil Sementara
+          Lihat Hasil Sementara
         </Link>
       </div>
     </div>

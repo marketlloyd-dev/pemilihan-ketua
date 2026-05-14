@@ -76,7 +76,7 @@ export default function Beranda() {
     <div className="pb-10 sm:pb-12 px-3 sm:px-4">
       <div className="text-center mt-6 mb-8 sm:mb-10">
         <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
-          🗳️ {data.settings.electionTitle}
+          {data.settings.electionTitle}
         </h1>
         <p className="text-gray-400 text-sm sm:text-base mt-2">Pemilihan Ketua Umum</p>
       </div>
@@ -108,13 +108,13 @@ export default function Beranda() {
           to="/scan"
           className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 sm:px-8 py-3 rounded-xl font-bold text-base sm:text-lg hover:shadow-lg transition text-center"
         >
-          🗳️ Mulai Voting
+          Mulai Voting
         </Link>
         <Link
           to="/dashboard"
           className="w-full sm:w-auto bg-gray-700 text-white px-6 sm:px-8 py-3 rounded-xl font-bold text-base sm:text-lg hover:bg-gray-600 transition text-center"
         >
-          📊 Lihat Hasil
+          Lihat Hasil
         </Link>
       </div>
     </div>

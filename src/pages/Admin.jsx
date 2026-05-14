@@ -175,8 +175,8 @@ export default function Admin() {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 bg-gray-800/80 rounded-xl p-1.5">
-          <button onClick={() => setActiveTab('candidates')} className={`flex-1 py-2 rounded-lg text-sm font-semibold ${activeTab === 'candidates' ? 'bg-emerald-600 text-white' : 'text-gray-400'}`}>👥 Kandidat</button>
-          <button onClick={() => setActiveTab('settings')} className={`flex-1 py-2 rounded-lg text-sm font-semibold ${activeTab === 'settings' ? 'bg-emerald-600 text-white' : 'text-gray-400'}`}>⚙️ Pengaturan</button>
+          <button onClick={() => setActiveTab('candidates')} className={`flex-1 py-2 rounded-lg text-sm font-semibold ${activeTab === 'candidates' ? 'bg-emerald-600 text-white' : 'text-gray-400'}`}>Kandidat</button>
+          <button onClick={() => setActiveTab('settings')} className={`flex-1 py-2 rounded-lg text-sm font-semibold ${activeTab === 'settings' ? 'bg-emerald-600 text-white' : 'text-gray-400'}`}>Pengaturan</button>
         </div>
 
         {/* Tab Kandidat */}
@@ -217,7 +217,7 @@ export default function Admin() {
             )}
 
             <div className="bg-gray-800 rounded-2xl p-4 sm:p-6 border border-emerald-700/30">
-              <h2 className="text-lg font-bold text-white mb-4">👥 Daftar Kandidat</h2>
+              <h2 className="text-lg font-bold text-white mb-4">Daftar Kandidat</h2>
               {data.candidates.map(c => (
                 <div key={c.id} className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-gray-700/50 p-3 rounded-xl mb-2">
                   <span className="text-xl font-bold text-emerald-400">#{c.nomorUrut}</span>
@@ -240,16 +240,16 @@ export default function Admin() {
         {/* Tab Pengaturan */}
         {activeTab === 'settings' && (
           <div className="bg-gray-800 rounded-2xl p-4 sm:p-6 border border-emerald-700/30">
-            <h2 className="text-lg font-bold text-white mb-4">⚙️ Pengaturan Pemilihan</h2>
+            <h2 className="text-lg font-bold text-white mb-4"> Pengaturan Pemilihan</h2>
             <div className="bg-gray-700/50 rounded-xl p-4 mb-6">
               <p className="text-gray-300">Status: <span className={data.settings.isElectionActive ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>{data.settings.isElectionActive ? '🟢 Aktif' : '🔴 Tidak Aktif'}</span></p>
               <p className="text-gray-300 mt-1">Berakhir: {new Date(data.settings.electionEndTime).toLocaleString('id-ID')}</p>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-6">
-              <button onClick={handleStart} className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold text-sm">▶️ Mulai</button>
-              <button onClick={handlePause} className="bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold text-sm">⏸️ Jeda</button>
-              <button onClick={handleStop} className="bg-red-600 text-white px-4 py-2 rounded-xl font-semibold text-sm">⏹️ Stop</button>
+              <button onClick={handleStart} className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold text-sm"> Mulai</button>
+              <button onClick={handlePause} className="bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold text-sm"> Jeda</button>
+              <button onClick={handleStop} className="bg-red-600 text-white px-4 py-2 rounded-xl font-semibold text-sm"> Stop</button>
             </div>
 
             <form onSubmit={handleSaveSettings} className="space-y-4">
@@ -273,7 +273,7 @@ export default function Admin() {
                   </div>
                 </div>
               </div>
-              <button type="submit" className="bg-emerald-500 text-white px-6 py-2.5 rounded-xl">💾 Simpan</button>
+              <button type="submit" className="bg-emerald-500 text-white px-6 py-2.5 rounded-xl">Simpan</button>
             </form>
           </div>
         )}
@@ -284,7 +284,7 @@ export default function Admin() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowQR(false)}>
           <div className="bg-gray-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center border border-emerald-700/30 relative" onClick={e => e.stopPropagation()}>
             <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
-            <h3 className="text-xl font-bold text-white mb-4">📱 Scan QR</h3>
+            <h3 className="text-xl font-bold text-white mb-4">Cetak QR</h3>
             <div className="bg-white p-4 rounded-2xl inline-block">
               <QRCode value={`${window.location.origin}/scan`} size={200} bgColor="#ffffff" fgColor="#064e3b" level="H" />
             </div>

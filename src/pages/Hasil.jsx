@@ -20,7 +20,7 @@ export default function Hasil() {
     <div className="space-y-8 animate-fade-in">
       <div className="text-center">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">
-          📊 Hasil <span className="gradient-text">Pemilihan</span>
+          Hasil <span className="gradient-text">Pemilihan</span>
         </h1>
         <p className="text-gray-400 mt-2">
           {isElectionActive ? 'Hasil sementara - pemilihan masih berlangsung' : 'Hasil akhir pemilihan'}
@@ -49,7 +49,7 @@ export default function Hasil() {
 
       <div className="glass rounded-3xl p-6 sm:p-8 max-w-4xl mx-auto shadow-xl">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-          <h3 className="text-xl font-bold text-gray-200">📋 Detail Perolehan Suara</h3>
+          <h3 className="text-xl font-bold text-gray-200">Detail Perolehan Suara</h3>
           <button
             onClick={handleExport}
             className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all"

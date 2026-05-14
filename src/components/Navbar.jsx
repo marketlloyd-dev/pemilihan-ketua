@@ -16,7 +16,7 @@ export default function Navbar() {
             alt="Logo"
             className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
           />
-          <span className="hidden sm:block text-sm sm:text-base">Muskom HIMMAH NW Kom. STMIK</span>
+          <span className="hidden sm:block text-sm sm:text-base">HIMMAH NW Kom.STMIK</span>
         </Link>
 
         {/* Tombol hamburger (mobile) */}
@@ -51,10 +51,10 @@ export default function Navbar() {
 
 function NavLinks({ isActive, mobile }) {
   const links = [
-    { to: '/', label: 'Beranda', icon: '🏠' },
-    { to: '/kandidat', label: 'Kandidat', icon: '👥' },
-    { to: '/dashboard', label: 'Hasil', icon: '📊' },
-    { to: '/admin', label: 'Admin', icon: '⚙️' },
+    { to: '/', label: 'Beranda', },
+    { to: '/kandidat', label: 'Kandidat', },
+    { to: '/dashboard', label: 'Hasil', },
+    { to: '/admin', label: 'Admin', },
   ];
 
   return links.map((link) => (

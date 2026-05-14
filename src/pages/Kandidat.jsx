@@ -92,7 +92,7 @@ export default function Kandidat() {
                 to="/scan"
                 className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-2 sm:py-2.5 rounded-xl font-semibold text-sm sm:text-base text-center hover:shadow-lg hover:shadow-emerald-500/20 transition"
               >
-                🗳️ Pergi ke Voting
+                Pergi ke Voting
               </Link>
             </div>
           ))}
