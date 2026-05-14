@@ -79,7 +79,7 @@ export default function Beranda() {
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white">
           🗳️ {data.settings.electionTitle}
         </h1>
-        <p className="text-gray-400 mt-2">Pemilihan Ketua Umum</p>
+        <p className="text-gray-400 mt-2">Tema : tema "Optimalisasi regenerasi pemimpin muda HIMMAH NW  Yang berkualitas dan berintegritas"</p>
       </div>
 
       {/* Statistik */}

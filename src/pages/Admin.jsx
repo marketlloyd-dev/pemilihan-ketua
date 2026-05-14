@@ -169,31 +169,32 @@ export default function Admin() {
     saveToServer(updated);
   };
 
-  const handleStart = () => {
-    if (!confirm('Mulai pemilihan sekarang?')) return;
-    // Set aktif, waktu berakhir diperpanjang 7 hari dari sekarang (atau biarkan seperti di form)
-    const startDate = new Date();
-    const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // +7 hari
-    const updatedSettings = {
-      ...settingsForm,
+ const handleStart = () => {
+  if (!confirm('Mulai pemilihan sekarang?')) return;
+  const startDate = new Date();
+  const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // +7 hari
+  const newData = {
+    ...data,
+    settings: {
+      ...data.settings,
       isElectionActive: true,
-      electionEndDate: endDate.toISOString().slice(0, 10),
-      electionEndTime: '12:00',
-      electionEndAmPm: 'PM',
-    };
-    setSettingsForm(updatedSettings);
-    const [year, month, day] = updatedSettings.electionEndDate.split('-');
-    const end = new Date(year, month - 1, day, 12, 0);
-    const newData = {
-      ...data,
-      settings: {
-        ...data.settings,
-        isElectionActive: true,
-        electionEndTime: end.toISOString(),
-      },
-    };
-    saveToServer(newData);
+      electionEndTime: endDate.toISOString(),
+    },
   };
+  saveToServer(newData); // API akan mendeteksi perubahan dari false ke true
+  // Perbarui form pengaturan juga
+  const [year, month, day] = endDate.toISOString().slice(0, 10).split('-');
+  const hours = endDate.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  setSettingsForm({
+    ...settingsForm,
+    isElectionActive: true,
+    electionEndDate: `${year}-${month}-${day}`,
+    electionEndTime: `${String(displayHours).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`,
+    electionEndAmPm: ampm,
+  });
+};
 
   const handlePause = () => {
     if (!confirm('Jeda pemilihan? Pemilih tidak dapat memberikan suara.')) return;

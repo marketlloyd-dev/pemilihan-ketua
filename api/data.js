@@ -14,7 +14,8 @@ let db = {
   settings: {
     electionTitle: 'Pemilihan Ketua Umum 2025',
     isElectionActive: true,
-    electionEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    electionEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    electionId: 'default' // ID unik sesi pemilihan
   },
   votes: [],
   nextCandidateId: 2
@@ -41,7 +42,15 @@ export default async function handler(req, res) {
     const token = req.headers['x-admin-token'];
     if (token !== 'admin123') return json(res, 401, { error: 'Unauthorized' });
     if (!req.body || !req.body.candidates) return json(res, 400, { error: 'Invalid' });
+
+    const oldActive = db.settings.isElectionActive;
     db = req.body;
+
+    // Jika pemilihan berubah dari tidak aktif menjadi aktif → reset electionId
+    if (!oldActive && db.settings.isElectionActive) {
+      db.settings.electionId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+    }
+
     return json(res, 200, { success: true });
   }
 
@@ -51,20 +60,21 @@ export default async function handler(req, res) {
     const endTime = new Date(db.settings.electionEndTime);
     const isActive = db.settings.isElectionActive && now < endTime;
 
-    // 1. Jika pemilihan tidak aktif, tolak (tidak perlu cek cookie)
-    if (!isActive) {
-      return json(res, 400, { error: 'Pemilihan sudah ditutup' });
-    }
+    if (!isActive) return json(res, 400, { error: 'Pemilihan sudah ditutup' });
 
-    // 2. Baca cookie voted_token
+    // Baca cookie
     const cookieHeader = req.headers.cookie || '';
     const cookies = Object.fromEntries(
       cookieHeader.split('; ').map(c => c.split('='))
     );
 
-    // 3. Cek cookie hanya jika pemilihan aktif
+    // Cek cookie voted_token, bandingkan dengan electionId saat ini
     if (cookies.voted_token) {
-      return json(res, 400, { error: 'Anda sudah memberikan suara (terdeteksi dari cookie)' });
+      const [votedElectionId] = cookies.voted_token.split(':'); // format: electionId:1
+      if (votedElectionId === db.settings.electionId) {
+        return json(res, 400, { error: 'Anda sudah memberikan suara pada pemilihan ini' });
+      }
+      // Jika electionId berbeda (pemilihan sudah direset), abaikan cookie → boleh vote lagi
     }
 
     const { candidateId } = req.body || {};
@@ -73,20 +83,19 @@ export default async function handler(req, res) {
     const idx = db.candidates.findIndex(c => c.id === candidateId);
     if (idx === -1) return json(res, 400, { error: 'Kandidat tidak ditemukan' });
 
-    // 4. Catat suara
+    // Catat suara
     db.candidates[idx].voteCount = (db.candidates[idx].voteCount || 0) + 1;
     db.votes.push({
       candidateId,
       timestamp: now.toISOString()
     });
 
-    // 5. Hitung selisih detik ke waktu berakhir
+    // Set cookie: voted_token = electionId:1
+    const cookieValue = `${db.settings.electionId}:1`;
     const remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
-
-    // 6. Set cookie dengan Max-Age sesuai sisa waktu
     res.setHeader(
       'Set-Cookie',
-      `voted_token=1; Path=/; Max-Age=${remainingSeconds}; SameSite=Lax; Secure; HttpOnly`
+      `voted_token=${cookieValue}; Path=/; Max-Age=${remainingSeconds}; SameSite=Lax; Secure; HttpOnly`
     );
 
     return json(res, 200, { success: true, message: 'Suara berhasil!' });
