@@ -150,14 +150,14 @@ export default function Admin() {
           <h2 className="text-white text-2xl font-bold mb-6 text-center">🔐 Login Admin</h2>
           <input
             className="w-full mb-4 px-4 py-3 bg-gray-700 text-white rounded-xl"
-            placeholder="admin"
+            placeholder="username_admin"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
           <input
             type="password"
             className="w-full mb-6 px-4 py-3 bg-gray-700 text-white rounded-xl"
-            placeholder="admin123"
+            placeholder="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -176,7 +176,7 @@ export default function Admin() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">⚙️ Panel Admin</h1>
+          <h1 className="text-3xl font-bold text-white"> Menu Admin</h1>
           <div className="flex gap-3">
             <button
               onClick={() => {

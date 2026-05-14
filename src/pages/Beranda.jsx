@@ -1,218 +1,125 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
-import CountdownTimer from '../components/CountdownTimer';
-import Celebration from '../components/Celebration';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-export default function Beranda() {
-  const {
-    data, currentUser, isElectionActive, remainingTime,
-    totalVotes, totalVoters, hasUserVoted, castVote,
-    setShowLoginModal, setLoginMode
-  } = useApp();
-  const navigate = useNavigate();
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [showVoteConfirm, setShowVoteConfirm] = useState(false);
+function CountdownTimer({ endTime }) {
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
-  const handleVoteClick = () => {
-    if (!currentUser) {
-      setLoginMode('voter');
-      setShowLoginModal(true);
-      return;
-    }
-    if (hasUserVoted) {
-      alert('Anda sudah memberikan suara. Terima kasih!');
-      return;
-    }
-    if (!isElectionActive) {
-      alert('Pemilihan sudah ditutup.');
-      return;
-    }
-    navigate('/kandidat');
-  };
+  function calculateTimeLeft() {
+    const now = new Date().getTime();
+    const end = new Date(endTime).getTime();
+    const diff = end - now;
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+    };
+  }
 
-  const quickVote = (candidateId) => {
-    if (!currentUser) {
-      setLoginMode('voter');
-      setShowLoginModal(true);
-      return;
-    }
-    if (hasUserVoted) {
-      alert('Anda sudah memberikan suara.');
-      return;
-    }
-    setSelectedCandidate(candidateId);
-    setShowVoteConfirm(true);
-  };
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [endTime]);
 
-  // ✅ Fungsi konfirmasi suara (async, dilengkapi deteksi IP dari context)
-  const confirmVote = async () => {
-    const result = await castVote(selectedCandidate);
-    if (result.success) {
-      setShowVoteConfirm(false);
-      setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 4000);
-    } else {
-      alert(result.message);
-      setShowVoteConfirm(false);
-    }
-  };
+  const { days, hours, minutes, seconds } = timeLeft;
+
+  if (days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
+    return <span className="text-red-400 font-bold text-lg">Waktu habis</span>;
+  }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <Celebration show={showCelebration} />
+    <div className="flex gap-2 justify-center text-white font-bold">
+      <div className="bg-emerald-800 rounded-xl px-3 py-2 text-center">
+        <span className="text-2xl">{days}</span>
+        <p className="text-xs text-emerald-300">Hari</p>
+      </div>
+      <div className="bg-emerald-800 rounded-xl px-3 py-2 text-center">
+        <span className="text-2xl">{hours}</span>
+        <p className="text-xs text-emerald-300">Jam</p>
+      </div>
+      <div className="bg-emerald-800 rounded-xl px-3 py-2 text-center">
+        <span className="text-2xl">{minutes}</span>
+        <p className="text-xs text-emerald-300">Menit</p>
+      </div>
+      <div className="bg-emerald-800 rounded-xl px-3 py-2 text-center">
+        <span className="text-2xl">{seconds}</span>
+        <p className="text-xs text-emerald-300">Detik</p>
+      </div>
+    </div>
+  );
+}
 
-      {/* Hero Section */}
-      <div className="text-center py-6 sm:py-10">
-        <div className="inline-block mb-4">
-          <span className="bg-emerald-900/40 text-emerald-300 px-4 py-1.5 rounded-full text-sm font-semibold border border-emerald-600/30">
-            🗳️ {data.settings.electionTitle}
-          </span>
-        </div>
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
-          Pilih <span className="gradient-text">Pemimpin</span> Terbaik
+export default function Beranda() {
+  const [data, setData] = useState(null);
+
+  const fetchData = () => {
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(setData)
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!data) return <div className="text-white text-center pt-20">Memuat...</div>;
+
+  const totalVotes = data.candidates.reduce((sum, c) => sum + (c.voteCount || 0), 0);
+  const isActive = data.settings.isElectionActive && new Date(data.settings.electionEndTime) > new Date();
+
+  return (
+    <div className="pb-12">
+      <div className="text-center mt-6 mb-10">
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-white">
+          🗳️ {data.settings.electionTitle}
         </h1>
-        <p className="text-gray-300 mt-4 max-w-2xl mx-auto text-sm sm:text-base">
-          Gunakan hak suara Anda untuk memilih ketua yang akan membawa perubahan positif.
-          Setiap suara sangat berarti!
-        </p>
+        <p className="text-gray-400 mt-2">Pemilihan Ketua Umum</p>
       </div>
 
-      {/* Countdown Timer */}
-      {isElectionActive && (
-        <div className="glass rounded-3xl p-6 sm:p-8 text-center max-w-2xl mx-auto shadow-xl shadow-emerald-900/30">
-          <h3 className="text-lg font-semibold text-gray-200 mb-4">⏳ Waktu Tersisa</h3>
-          <CountdownTimer remainingMs={remainingTime} />
-        </div>
-      )}
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
-        {/* Total Kandidat */}
-        <div className="glass rounded-2xl p-6 text-center glow-card shine">
-          <div className="text-4xl mb-3">👥</div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-emerald-400 animate-count-up">
-            {data.candidates.length}
-          </div>
+      {/* Statistik */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-8">
+        <div className="bg-gray-800/80 backdrop-blur rounded-2xl p-6 text-center border border-emerald-700/30">
+          <p className="text-4xl mb-2">👥</p>
+          <p className="text-3xl font-bold text-white">{data.candidates.length}</p>
           <p className="text-gray-400 text-sm mt-1">Jumlah Kandidat</p>
         </div>
-
-        {/* Suara Masuk */}
-        <div className="glass rounded-2xl p-6 text-center glow-card shine">
-          <div className="text-4xl mb-3">📥</div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-emerald-300 animate-count-up">
-            {totalVotes}
-          </div>
+        <div className="bg-gray-800/80 backdrop-blur rounded-2xl p-6 text-center border border-emerald-700/30">
+          <p className="text-4xl mb-2">📥</p>
+          <p className="text-3xl font-bold text-white">{totalVotes}</p>
           <p className="text-gray-400 text-sm mt-1">Suara Masuk</p>
         </div>
-
-        {/* Pemilih Terdaftar */}
-        <div className="glass rounded-2xl p-6 text-center glow-card shine">
-          <div className="text-4xl mb-3">👤</div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-emerald-300 animate-count-up">
-            {totalVoters}
-          </div>
-          <p className="text-gray-400 text-sm mt-1">Pemilih Terdaftar</p>
+        <div className="bg-gray-800/80 backdrop-blur rounded-2xl p-6 text-center border border-emerald-700/30">
+          <p className="text-4xl mb-2">⏳</p>
+          <p className="text-gray-400 text-sm mb-2">Waktu Tersisa</p>
+          {isActive ? (
+            <CountdownTimer endTime={data.settings.electionEndTime} />
+          ) : (
+            <span className="text-red-400 font-bold">Pemilihan ditutup</span>
+          )}
         </div>
       </div>
 
-      {/* Quick Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
-        {/* Tombol Berikan Suara (Kiri) */}
-        <button
-          onClick={handleVoteClick}
-          disabled={!isElectionActive && !currentUser}
-          className={`btn-ripple w-full sm:w-auto px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${
-            isElectionActive && !hasUserVoted
-              ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-xl shadow-emerald-500/30 hover:scale-105 animate-glow'
-              : 'bg-dark-700 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          🗳️ Berikan Suara
-        </button>
-
-        {/* Tombol Lihat Kandidat (Kanan) */}
+      {/* Tombol aksi */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
-          to="/kandidat"
-          className="w-full sm:w-auto px-8 py-4 rounded-2xl font-bold text-lg border-2 border-emerald-500 text-emerald-300 hover:bg-emerald-500/20 transition-all duration-300 flex items-center justify-center gap-2 hover:scale-105"
+          to="/scan"
+          className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-3 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-emerald-500/20 transition text-center"
         >
-          👥 Lihat Kandidat
+          🗳️ Mulai Voting
+        </Link>
+        <Link
+          to="/dashboard"
+          className="bg-gray-700 text-white px-8 py-3 rounded-xl font-bold text-lg hover:bg-gray-600 transition text-center"
+        >
+          📊 Lihat Hasil
         </Link>
       </div>
-
-      {/* Quick Vote Section (only if logged in and hasn't voted) */}
-      {currentUser && !hasUserVoted && isElectionActive && (
-        <div className="glass rounded-3xl p-6 sm:p-8 max-w-3xl mx-auto shadow-xl">
-          <h3 className="text-xl font-bold text-white text-center mb-6">
-            ⚡ Vote Cepat - Pilih Kandidat
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {data.candidates.map(candidate => (
-              <button
-                key={candidate.id}
-                onClick={() => quickVote(candidate.id)}
-                className="bg-emerald-900/40 rounded-2xl p-5 text-center hover:shadow-xl hover:scale-105 transition-all duration-300 border-2 border-transparent hover:border-emerald-500 shine"
-              >
-                <img
-                  src={candidate.photo}
-                  alt={candidate.name}
-                  className="w-20 h-20 rounded-full mx-auto mb-3 border-4 border-emerald-600/40 object-cover"
-                  onError={(e) => { e.target.src = 'https://api.dicebear.com/9.x/avataaars/svg?seed=default'; }}
-                />
-                <p className="font-bold text-gray-200">{candidate.name}</p>
-                <p className="text-xs text-emerald-400 font-semibold mt-1">Nomor Urut {candidate.nomorUrut}</p>
-                <span className="inline-block mt-2 text-xs bg-emerald-800/50 text-emerald-300 px-2 py-1 rounded-full">
-                  Klik untuk Vote
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Already Voted Message */}
-      {hasUserVoted && (
-        <div className="glass rounded-3xl p-8 text-center max-w-lg mx-auto border-2 border-emerald-500/40">
-          <div className="text-5xl mb-4">✅</div>
-          <h3 className="text-xl font-bold text-emerald-300">Anda Sudah Memberikan Suara</h3>
-          <p className="text-gray-300 mt-2">Terima kasih atas partisipasi Anda!</p>
-          <Link
-            to="/hasil"
-            className="inline-block mt-4 px-6 py-2 bg-emerald-500 text-white rounded-full font-semibold hover:bg-emerald-600 transition-all"
-          >
-            Lihat Hasil
-          </Link>
-        </div>
-      )}
-
-      {/* Vote Confirmation Modal */}
-      {showVoteConfirm && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowVoteConfirm(false)}></div>
-          <div className="relative bg-dark-800 rounded-2xl p-8 max-w-sm w-full text-center animate-bounce-in shadow-2xl border border-emerald-700/30">
-            <div className="text-5xl mb-4">🤔</div>
-            <h3 className="text-xl font-bold text-white">Konfirmasi Suara</h3>
-            <p className="text-gray-400 mt-2">
-              Apakah Anda yakin ingin memilih kandidat ini? Suara tidak dapat diubah.
-            </p>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowVoteConfirm(false)}
-                className="flex-1 px-4 py-2.5 border-2 border-dark-600 rounded-xl font-semibold text-gray-300 hover:bg-dark-700 transition-all"
-              >
-                Batal
-              </button>
-              <button
-                onClick={confirmVote}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-              >
-                Ya, Vote!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

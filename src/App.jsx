@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Beranda from './pages/Beranda';   // import baru
 import Scan from './pages/Scan';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';
@@ -11,7 +12,7 @@ export default function App() {
         <Navbar />
         <div className="pt-4 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <Routes>
-            <Route path="/" element={<Scan />} />
+            <Route path="/" element={<Beranda />} />   {/* halaman utama */}
             <Route path="/scan" element={<Scan />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/dashboard" element={<Dashboard />} />
