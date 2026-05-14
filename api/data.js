@@ -3,7 +3,7 @@ let db = {
   candidates: [
     {
       id: 1,
-      name: 'Andi Pratama',
+      name: 'MOH. Hadissibyan',
       photo: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Andi&backgroundColor=b6e3f4',
       visi: 'Mewujudkan organisasi yang transparan, inovatif, dan berdaya saing tinggi.',
       misi: '1. Meningkatkan kualitas program kerja.\n2. Membangun komunikasi dua arah.\n3. Mengembangkan potensi anggota.\n4. Menjalin kerjasama strategis.',
@@ -12,10 +12,10 @@ let db = {
     }
   ],
   settings: {
-    electionTitle: 'Pemilihan Ketua Umum 2025',
+    electionTitle: 'Pemilihan Ketua Komisariat 2026',
     isElectionActive: true,
     electionEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    electionId: 'default' // ID unik sesi pemilihan
+    electionId: 'default'
   },
   votes: [],
   nextCandidateId: 2

@@ -78,7 +78,7 @@ export default function Beranda() {
         <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
           {data.settings.electionTitle}
         </h1>
-        <p className="text-gray-400 text-sm sm:text-base mt-2">Pemilihan Ketua Umum</p>
+        <p className="text-gray-400 text-sm sm:text-base mt-2">Tema : "Optimalisasi regenerasi pemimpin muda HIMMAH NW  Yang berkualitas dan berintegritas"</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto mb-8 sm:mb-10">
