@@ -7,7 +7,7 @@ export default function Admin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [data, setData] = useState(null);
-  const [activeTab, setActiveTab] = useState('candidates'); // 'candidates' atau 'settings'
+  const [activeTab, setActiveTab] = useState('candidates');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -40,7 +40,7 @@ export default function Admin() {
         setSettingsForm({
           electionTitle: json.settings.electionTitle,
           isElectionActive: json.settings.isElectionActive,
-          electionEndDate: end.toISOString().slice(0, 10), // yyyy-mm-dd
+          electionEndDate: end.toISOString().slice(0, 10),
           electionEndTime: String(displayHours).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0'),
           electionEndAmPm: ampm,
         });
@@ -151,7 +151,6 @@ export default function Admin() {
 
   // ---- Pengaturan Waktu ----
   const applySettings = (newSettings) => {
-    // Gabungkan date + time + AM/PM menjadi ISO string
     const [year, month, day] = newSettings.electionEndDate.split('-');
     const [hour, minute] = newSettings.electionEndTime.split(':');
     let hour24 = parseInt(hour);
@@ -170,32 +169,30 @@ export default function Admin() {
     saveToServer(updated);
   };
 
- const handleStart = () => {
-  if (!confirm('Mulai pemilihan sekarang?')) return;
-  const startDate = new Date();
-  const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // +7 hari
-  const newData = {
-    ...data,
-    settings: {
-      ...data.settings,
+  const handleStart = () => {
+    if (!confirm('Mulai pemilihan sekarang?')) return;
+    const startDate = new Date();
+    const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const updatedSettings = {
+      ...settingsForm,
       isElectionActive: true,
-      electionEndTime: endDate.toISOString(),
-    },
+      electionEndDate: endDate.toISOString().slice(0, 10),
+      electionEndTime: '12:00',
+      electionEndAmPm: 'PM',
+    };
+    setSettingsForm(updatedSettings);
+    const [year, month, day] = updatedSettings.electionEndDate.split('-');
+    const end = new Date(year, month - 1, day, 12, 0);
+    const newData = {
+      ...data,
+      settings: {
+        ...data.settings,
+        isElectionActive: true,
+        electionEndTime: end.toISOString(),
+      },
+    };
+    saveToServer(newData);
   };
-  saveToServer(newData); // API akan mendeteksi perubahan dari false ke true
-  // Perbarui form pengaturan juga
-  const [year, month, day] = endDate.toISOString().slice(0, 10).split('-');
-  const hours = endDate.getHours();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  setSettingsForm({
-    ...settingsForm,
-    isElectionActive: true,
-    electionEndDate: `${year}-${month}-${day}`,
-    electionEndTime: `${String(displayHours).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`,
-    electionEndAmPm: ampm,
-  });
-};
 
   const handlePause = () => {
     if (!confirm('Jeda pemilihan? Pemilih tidak dapat memberikan suara.')) return;
@@ -240,10 +237,10 @@ export default function Admin() {
   if (!loggedIn) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <form onSubmit={(e) => { e.preventDefault(); if (username === 'jess' && password === '123') setLoggedIn(true); else alert('Salah'); }}
+        <form onSubmit={(e) => { e.preventDefault(); if (username === 'admin' && password === 'admin123') setLoggedIn(true); else alert('Salah'); }}
           className="bg-gray-800 p-8 rounded-2xl max-w-sm w-full border border-emerald-700/30">
-          <h2 className="text-white text-2xl font-bold mb-6 text-center"> Login Admin</h2>
-          <input className="w-full mb-4 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="username_admin" value={username} onChange={e => setUsername(e.target.value)} />
+          <h2 className="text-white text-2xl font-bold mb-6 text-center">Login Admin</h2>
+          <input className="w-full mb-4 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="username" value={username} onChange={e => setUsername(e.target.value)} />
           <input type="password" className="w-full mb-6 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="password" value={password} onChange={e => setPassword(e.target.value)} />
           <button type="submit" className="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold">Masuk</button>
         </form>
@@ -258,16 +255,11 @@ export default function Admin() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">⚙️ Panel Admin</h1>
+          <h1 className="text-3xl font-bold text-white">Panel Admin</h1>
           <div className="flex gap-3">
-            <button onClick={() => { resetForm(); setShowAddForm(true); }} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">+ Tambah</button>
-            <button
-  onClick={() => exportToExcel(data)}
-  className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700"
->
-  📥 Export Excel
-</button>
-            <button onClick={() => setShowQR(true)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">📱 QR</button>
+            <button onClick={() => { resetForm(); setShowAddForm(true); }} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">Tambah</button>
+            <button onClick={() => exportToExcel(data)} className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">Export Excel</button>
+            <button onClick={() => setShowQR(true)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">QR</button>
             <button onClick={() => setLoggedIn(false)} className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">Logout</button>
           </div>
         </div>
@@ -275,10 +267,10 @@ export default function Admin() {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 bg-gray-800 rounded-xl p-1.5">
           <button onClick={() => setActiveTab('candidates')} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'candidates' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-            👥 Kandidat ({data.candidates.length})
+            Kandidat ({data.candidates.length})
           </button>
           <button onClick={() => setActiveTab('settings')} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'settings' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-            ⚙️ Pengaturan
+            Pengaturan
           </button>
         </div>
 
@@ -287,7 +279,7 @@ export default function Admin() {
           <>
             {showAddForm && (
               <div className="bg-gray-800 rounded-2xl p-6 mb-6 border border-emerald-700/30">
-                <h3 className="text-white text-xl font-bold mb-4">{editingId ? '✏️ Edit' : '➕ Tambah'}</h3>
+                <h3 className="text-white text-xl font-bold mb-4">{editingId ? 'Edit Kandidat' : 'Tambah Kandidat'}</h3>
                 <form onSubmit={editingId ? handleUpdate : handleAdd} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <input className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" placeholder="Nama" value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} required />
@@ -296,15 +288,15 @@ export default function Admin() {
                   <div>
                     <label className="text-gray-300 text-sm block mb-2">Foto</label>
                     <div className="flex gap-2 mb-2">
-                      <button type="button" onClick={() => setPhotoSource('url')} className={`px-3 py-1.5 rounded-lg text-xs ${photoSource === 'url' ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300'}`}>🔗 URL</button>
-                      <button type="button" onClick={() => setPhotoSource('upload')} className={`px-3 py-1.5 rounded-lg text-xs ${photoSource === 'upload' ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300'}`}>📁 Upload</button>
+                      <button type="button" onClick={() => setPhotoSource('url')} className={`px-3 py-1.5 rounded-lg text-xs ${photoSource === 'url' ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300'}`}>URL</button>
+                      <button type="button" onClick={() => setPhotoSource('upload')} className={`px-3 py-1.5 rounded-lg text-xs ${photoSource === 'upload' ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300'}`}>Upload</button>
                     </div>
                     {photoSource === 'url' && <input className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" placeholder="URL foto" value={formData.photo} onChange={e => { setFormData(p => ({ ...p, photo: e.target.value })); setImagePreview(e.target.value); }} />}
                     {photoSource === 'upload' && (
                       <div>
                         <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                        <button type="button" onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-gray-700 text-white rounded-xl border border-dashed border-gray-500">📁 Pilih File</button>
-                        {formData.photo && <span className="text-emerald-400 text-sm ml-2">✅ Terpilih</span>}
+                        <button type="button" onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-gray-700 text-white rounded-xl border border-dashed border-gray-500">Pilih File</button>
+                        {formData.photo && <span className="text-emerald-400 text-sm ml-2">Terpilih</span>}
                       </div>
                     )}
                     {(imagePreview || formData.photo) && <img src={imagePreview || formData.photo} className="w-20 h-20 rounded-full object-cover mt-2 border-2 border-emerald-500/30" onError={(e) => e.target.style.display = 'none'} />}
@@ -312,22 +304,22 @@ export default function Admin() {
                   <textarea className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" rows="2" placeholder="Visi" value={formData.visi} onChange={e => setFormData(p => ({ ...p, visi: e.target.value }))} required />
                   <textarea className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" rows="3" placeholder="Misi" value={formData.misi} onChange={e => setFormData(p => ({ ...p, misi: e.target.value }))} required />
                   <div className="flex gap-3">
-                    <button type="submit" className="bg-emerald-500 text-white px-6 py-2 rounded-xl">{editingId ? '💾 Simpan' : '➕ Tambahkan'}</button>
+                    <button type="submit" className="bg-emerald-500 text-white px-6 py-2 rounded-xl">{editingId ? 'Simpan' : 'Tambahkan'}</button>
                     <button type="button" onClick={resetForm} className="bg-gray-600 text-white px-6 py-2 rounded-xl">Batal</button>
                   </div>
                 </form>
               </div>
             )}
             <div className="bg-gray-800 rounded-2xl p-6 border border-emerald-700/30">
-              <h2 className="text-xl font-bold text-white mb-4">👥 Daftar Kandidat</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Daftar Kandidat</h2>
               {data.candidates.map(c => (
                 <div key={c.id} className="flex items-center gap-4 bg-gray-700/50 p-3 rounded-xl mb-2">
                   <span className="text-2xl font-bold text-emerald-400">#{c.nomorUrut}</span>
                   <img src={c.photo} className="w-12 h-12 rounded-full object-cover" onError={(e) => e.target.src = 'https://api.dicebear.com/9.x/avataaars/svg?seed=default'} />
                   <div className="flex-1"><p className="font-bold text-white">{c.name}</p><p className="text-gray-400 text-sm line-clamp-1">{c.visi}</p></div>
                   <p className="text-emerald-400 font-bold">{c.voteCount || 0} suara</p>
-                  <button onClick={() => handleEdit(c)} className="text-blue-400">✏️</button>
-                  <button onClick={() => handleDelete(c.id)} className="text-red-400">🗑️</button>
+                  <button onClick={() => handleEdit(c)} className="text-blue-400">Edit</button>
+                  <button onClick={() => handleDelete(c.id)} className="text-red-400">Hapus</button>
                 </div>
               ))}
               {data.candidates.length === 0 && <p className="text-gray-500 text-center py-4">Belum ada kandidat</p>}
@@ -338,24 +330,21 @@ export default function Admin() {
         {/* ===== TAB PENGATURAN ===== */}
         {activeTab === 'settings' && (
           <div className="bg-gray-800 rounded-2xl p-6 border border-emerald-700/30">
-            <h2 className="text-xl font-bold text-white mb-4">⚙️ Pengaturan Pemilihan</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Pengaturan Pemilihan</h2>
 
-            {/* Status saat ini */}
             <div className="bg-gray-700/50 rounded-xl p-4 mb-6">
               <p className="text-gray-300">Status: <span className={data.settings.isElectionActive ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-                {data.settings.isElectionActive ? '🟢 Sedang Berlangsung' : '🔴 Tidak Aktif'}
+                {data.settings.isElectionActive ? 'Sedang Berlangsung' : 'Tidak Aktif'}
               </span></p>
               <p className="text-gray-300 mt-1">Berakhir: {new Date(data.settings.electionEndTime).toLocaleString('id-ID')}</p>
             </div>
 
-            {/* Tombol kontrol */}
             <div className="flex flex-wrap gap-3 mb-6">
-              <button onClick={handleStart} className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700">▶️ Mulai</button>
-              <button onClick={handlePause} className="bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-yellow-700">⏸️ Jeda</button>
-              <button onClick={handleStop} className="bg-red-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-700">⏹️ Stop</button>
+              <button onClick={handleStart} className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700">Mulai</button>
+              <button onClick={handlePause} className="bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-yellow-700">Jeda</button>
+              <button onClick={handleStop} className="bg-red-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-700">Stop</button>
             </div>
 
-            {/* Form pengaturan waktu */}
             <form onSubmit={handleSaveSettings} className="space-y-4">
               <div>
                 <label className="text-gray-300 text-sm">Judul Pemilihan</label>
@@ -377,7 +366,7 @@ export default function Admin() {
                   </div>
                 </div>
               </div>
-              <button type="submit" className="bg-emerald-500 text-white px-6 py-2 rounded-xl">💾 Simpan Pengaturan</button>
+              <button type="submit" className="bg-emerald-500 text-white px-6 py-2 rounded-xl">Simpan Pengaturan</button>
             </form>
           </div>
         )}
@@ -387,8 +376,8 @@ export default function Admin() {
       {showQR && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowQR(false)}>
           <div className="bg-gray-800 rounded-2xl p-8 max-w-sm w-full text-center border border-emerald-700/30 relative" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
-            <h3 className="text-xl font-bold text-white mb-4">📱 Scan QR</h3>
+            <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">X</button>
+            <h3 className="text-xl font-bold text-white mb-4">Scan QR</h3>
             <div className="bg-white p-4 rounded-2xl inline-block">
               <QRCode value={`${window.location.origin}/scan`} size={200} bgColor="#ffffff" fgColor="#064e3b" level="H" />
             </div>
