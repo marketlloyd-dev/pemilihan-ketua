@@ -1,7 +1,4 @@
 // api/data.js
-// In‑memory database – data akan bertahan selama fungsi serverless tetap hangat.
-// Untuk produksi serius, ganti dengan database permanen (KV, PostgreSQL, dll).
-
 let db = {
   candidates: [
     {
@@ -15,7 +12,7 @@ let db = {
     }
   ],
   settings: {
-    electionTitle: 'Pemilihan Ketua Umum 2025',
+    electionTitle: 'Pemilihan Ketua Komisariat',
     isElectionActive: true,
     electionEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   },
@@ -23,108 +20,68 @@ let db = {
   nextCandidateId: 2
 };
 
-// Helper sederhana untuk mengirim respons JSON
 function json(res, statusCode, data) {
   res.status(statusCode).json(data);
 }
 
 export default async function handler(req, res) {
-  // ---------- CORS ----------
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-token');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  // ---------- GET /api/data ----------
+  // GET
   if (req.method === 'GET') {
     return json(res, 200, db);
   }
 
-  // ---------- POST /api/data (simpan seluruh state, hanya admin) ----------
+  // POST (simpan state, admin)
   if (req.method === 'POST' && !req.query.action) {
     const token = req.headers['x-admin-token'];
-    if (token !== 'admin123') {
-      return json(res, 401, { error: 'Unauthorized' });
-    }
-
-    if (!req.body || !req.body.candidates) {
-      return json(res, 400, { error: 'Data tidak valid' });
-    }
-
+    if (token !== 'admin123') return json(res, 401, { error: 'Unauthorized' });
+    if (!req.body || !req.body.candidates) return json(res, 400, { error: 'Invalid' });
     db = req.body;
     return json(res, 200, { success: true });
   }
 
-  // ---------- POST /api/data?action=vote ----------
+  // POST /api/data?action=vote
   if (req.method === 'POST' && req.query.action === 'vote') {
-    // 1. Cek apakah pemilihan aktif dan belum berakhir
     const now = new Date();
     const endTime = new Date(db.settings.electionEndTime);
     const isActive = db.settings.isElectionActive && now < endTime;
-    if (!isActive) {
-      return json(res, 400, { error: 'Pemilihan sudah ditutup' });
-    }
+    if (!isActive) return json(res, 400, { error: 'Pemilihan sudah ditutup' });
 
-    // 2. Dapatkan IP
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-
-    // 3. Ambil token dari body (dikirim oleh frontend)
-    const { candidateId, token } = req.body || {};
-
-    // 4. Rate limiting – maks 3 percobaan per 10 detik dari IP yang sama
-    const tenSecondsAgo = now.getTime() - 10_000;
-    const recentAttempts = db.votes.filter(
-      v => v.ip === ip && new Date(v.timestamp).getTime() > tenSecondsAgo
+    // Baca cookie voted_token dari header
+    const cookieHeader = req.headers.cookie || '';
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map(c => c.split('='))
     );
-    if (recentAttempts.length >= 3) {
-      return json(res, 429, { error: 'Terlalu banyak percobaan. Silakan coba lagi nanti.' });
+    if (cookies.voted_token) {
+      return json(res, 400, { error: 'Mohon maaf, kanda telah memberikan suara' });
     }
 
-    // 5. Cek apakah IP sudah pernah vote
-    const ipAlreadyVoted = db.votes.some(v => v.ip === ip);
-    if (ipAlreadyVoted) {
-      return json(res, 400, { error: 'IP ini sudah memberikan suara' });
-    }
+    const { candidateId } = req.body || {};
+    if (!candidateId) return json(res, 400, { error: 'Nomor Urut kandidat diperlukan' });
 
-    // 6. Cek apakah token (perangkat) sudah pernah digunakan
-    if (token) {
-      const tokenAlreadyVoted = db.votes.some(v => v.token === token);
-      if (tokenAlreadyVoted) {
-        return json(res, 400, { error: 'Perangkat ini sudah memberikan suara' });
-      }
-    }
+    const idx = db.candidates.findIndex(c => c.id === candidateId);
+    if (idx === -1) return json(res, 400, { error: 'Kandidat tidak ditemukan' });
 
-    // 7. Validasi candidateId
-    if (!candidateId) {
-      return json(res, 400, { error: 'ID kandidat diperlukan' });
-    }
-
-    const candidateIndex = db.candidates.findIndex(c => c.id === candidateId);
-    if (candidateIndex === -1) {
-      return json(res, 400, { error: 'Kandidat tidak ditemukan' });
-    }
-
-    // 8. Catat suara
-    db.candidates[candidateIndex].voteCount = (db.candidates[candidateIndex].voteCount || 0) + 1;
+    // Catat suara (tanpa IP)
+    db.candidates[idx].voteCount = (db.candidates[idx].voteCount || 0) + 1;
     db.votes.push({
       candidateId,
-      ip,
-      token: token || null,
-      timestamp: now.toISOString(),
+      timestamp: now.toISOString()
     });
 
-    // 9. Kirim cookie agar token bertahan di sisi klien
+    // Set cookie tahan 1 tahun
     res.setHeader(
       'Set-Cookie',
-      `voted_token=${token || 'voted'}; Path=/; Max-Age=31536000; SameSite=Lax; Secure`
+      'voted_token=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure; HttpOnly'
     );
 
-    return json(res, 200, { success: true, message: 'Suara berhasil!' });
+    return json(res, 200, { success: true, message: 'Terimakasih Sudah Memberikan Suara' });
   }
 
-  // Method tidak diizinkan
   return json(res, 405, { error: 'Method not allowed' });
 }

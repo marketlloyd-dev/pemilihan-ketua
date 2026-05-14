@@ -238,11 +238,11 @@ export default function Admin() {
   if (!loggedIn) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <form onSubmit={(e) => { e.preventDefault(); if (username === 'admin' && password === 'admin123') setLoggedIn(true); else alert('Salah'); }}
+        <form onSubmit={(e) => { e.preventDefault(); if (username === 'jess' && password === '123') setLoggedIn(true); else alert('Salah'); }}
           className="bg-gray-800 p-8 rounded-2xl max-w-sm w-full border border-emerald-700/30">
-          <h2 className="text-white text-2xl font-bold mb-6 text-center">🔐 Login Admin</h2>
-          <input className="w-full mb-4 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="admin" value={username} onChange={e => setUsername(e.target.value)} />
-          <input type="password" className="w-full mb-6 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="admin123" value={password} onChange={e => setPassword(e.target.value)} />
+          <h2 className="text-white text-2xl font-bold mb-6 text-center"> Login Admin</h2>
+          <input className="w-full mb-4 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="username_admin" value={username} onChange={e => setUsername(e.target.value)} />
+          <input type="password" className="w-full mb-6 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="password" value={password} onChange={e => setPassword(e.target.value)} />
           <button type="submit" className="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold">Masuk</button>
         </form>
       </div>

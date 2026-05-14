@@ -9,7 +9,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 text-white font-bold text-lg">
           <span className="text-2xl">🗳️</span>
-          <span className="hidden sm:block">Muskom HIMMAH NW Kom. STMIK</span>
+          <span className="hidden sm:block">HIMMAH NW Kom. STMIK</span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -19,7 +19,7 @@ export default function Navbar() {
               isActive('/') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-            🏠 Beranda
+             Beranda
           </Link>
           <Link
             to="/kandidat"
@@ -27,7 +27,7 @@ export default function Navbar() {
               isActive('/kandidat') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-            👥 Kandidat
+             Kandidat
           </Link>
           <Link
             to="/dashboard"
@@ -35,7 +35,7 @@ export default function Navbar() {
               isActive('/dashboard') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-            📊 Hasil
+             Hasil
           </Link>
           <Link
             to="/admin"
@@ -43,7 +43,7 @@ export default function Navbar() {
               isActive('/admin') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-            ⚙️ Admin
+             Admin
           </Link>
         </div>
       </div>
