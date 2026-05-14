@@ -1,64 +1,165 @@
-import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useState, useEffect } from 'react';
 
 export default function Admin() {
-  const { data, loading, currentUser, loginAdmin, logout } = useApp();
+  const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [data, setData] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '', photo: '', visi: '', misi: '', nomorUrut: '',
+  });
 
-  if (loading) return <div className="text-white text-center pt-20">Memuat...</div>;
+  const fetchData = () => {
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(setData)
+      .catch(() => console.log('Gagal fetch'));
+  };
 
-  // Jika belum login, tampilkan form login
-  if (!currentUser || currentUser.role !== 'admin') {
-    const handleLogin = (e) => {
-      e.preventDefault();
-      loginAdmin(username, password);
+  useEffect(() => {
+    if (loggedIn) fetchData();
+  }, [loggedIn]);
+
+  const saveToServer = (newData) => {
+    fetch('/api/data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': 'admin123',
+      },
+      body: JSON.stringify(newData),
+    }).then(fetchData);
+  };
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    const newCandidate = {
+      id: data.nextCandidateId,
+      name: formData.name,
+      photo: formData.photo || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(formData.name)}&backgroundColor=b6e3f4`,
+      visi: formData.visi,
+      misi: formData.misi,
+      nomorUrut: parseInt(formData.nomorUrut) || data.candidates.length + 1,
+      voteCount: 0,
     };
+    const newData = {
+      ...data,
+      candidates: [...data.candidates, newCandidate],
+      nextCandidateId: data.nextCandidateId + 1,
+    };
+    saveToServer(newData);
+    setShowAddForm(false);
+    setFormData({ name: '', photo: '', visi: '', misi: '', nomorUrut: '' });
+  };
 
+  const handleEdit = (candidate) => {
+    setEditingId(candidate.id);
+    setFormData({
+      name: candidate.name,
+      photo: candidate.photo,
+      visi: candidate.visi,
+      misi: candidate.misi,
+      nomorUrut: candidate.nomorUrut.toString(),
+    });
+    setShowAddForm(true);
+  };
+
+  const handleUpdate = (e) => {
+    e.preventDefault();
+    const newData = {
+      ...data,
+      candidates: data.candidates.map(c =>
+        c.id === editingId ? { ...c, ...formData, nomorUrut: parseInt(formData.nomorUrut) } : c
+      ),
+    };
+    saveToServer(newData);
+    setEditingId(null);
+    setShowAddForm(false);
+    setFormData({ name: '', photo: '', visi: '', misi: '', nomorUrut: '' });
+  };
+
+  const handleDelete = (id) => {
+    if (!confirm('Hapus kandidat ini?')) return;
+    const newData = {
+      ...data,
+      candidates: data.candidates.filter(c => c.id !== id),
+    };
+    saveToServer(newData);
+  };
+
+  if (!loggedIn) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <form onSubmit={handleLogin} className="glass rounded-2xl p-8 max-w-sm w-full">
-          <h2 className="text-white text-xl font-bold mb-4">Login Admin</h2>
-          <input
-            type="text"
-            placeholder="admin"
-            className="w-full mb-3 px-4 py-2 bg-dark-800 border border-emerald-600/30 rounded-xl text-white"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="admin123"
-            className="w-full mb-4 px-4 py-2 bg-dark-800 border border-emerald-600/30 rounded-xl text-white"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button className="w-full bg-emerald-500 text-white py-2 rounded-xl">Masuk</button>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          if (username === 'admin' && password === 'admin123') setLoggedIn(true);
+          else alert('Username atau password salah');
+        }} className="bg-gray-800 p-8 rounded-2xl max-w-sm w-full">
+          <h2 className="text-white text-2xl font-bold mb-6 text-center">🔐 Login Admin</h2>
+          <input className="w-full mb-4 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="admin" value={username} onChange={(e) => setUsername(e.target.value)} />
+          <input type="password" className="w-full mb-6 px-4 py-3 bg-gray-700 text-white rounded-xl" placeholder="admin123" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <button type="submit" className="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold">Masuk</button>
         </form>
       </div>
     );
   }
 
-  // Sudah login
-  return (
-    <div className="text-white">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Panel Admin</h1>
-        <button onClick={logout} className="bg-red-600 px-4 py-2 rounded-xl">Logout</button>
-      </div>
+  if (!data) return <div className="text-white text-center pt-20">Memuat data...</div>;
 
-      <div className="glass rounded-2xl p-6 mb-6">
-        <h2 className="text-xl mb-4">Daftar Kandidat ({data.candidates.length})</h2>
-        {data.candidates.map(c => (
-          <div key={c.id} className="flex items-center gap-4 py-3 border-b border-dark-600">
-            <span className="text-2xl font-bold text-emerald-400">#{c.nomorUrut}</span>
-            <img src={c.photo} className="w-12 h-12 rounded-full" />
-            <div>
-              <p className="font-semibold">{c.name}</p>
-              <p className="text-gray-400 text-sm">{c.voteCount} suara</p>
-            </div>
+  return (
+    <div className="min-h-screen p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-white">⚙️ Panel Admin</h1>
+          <div className="flex gap-3">
+            <button onClick={() => {
+              setShowAddForm(true);
+              setEditingId(null);
+              setFormData({ name: '', photo: '', visi: '', misi: '', nomorUrut: '' });
+            }} className="bg-emerald-500 text-white px-4 py-2 rounded-xl">+ Tambah Kandidat</button>
+            <button onClick={() => setLoggedIn(false)} className="bg-red-500 text-white px-4 py-2 rounded-xl">Logout</button>
           </div>
-        ))}
+        </div>
+
+        {/* Form tambah/edit */}
+        {showAddForm && (
+          <div className="bg-gray-800 rounded-2xl p-6 mb-6">
+            <h3 className="text-white text-xl font-bold mb-4">
+              {editingId ? '✏️ Edit Kandidat' : '➕ Tambah Kandidat'}
+            </h3>
+            <form onSubmit={editingId ? handleUpdate : handleAdd} className="space-y-4">
+              <input className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" placeholder="Nama" value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} required />
+              <input className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" placeholder="Nomor Urut" type="number" value={formData.nomorUrut} onChange={(e) => setFormData(p => ({ ...p, nomorUrut: e.target.value }))} />
+              <input className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" placeholder="URL Foto" value={formData.photo} onChange={(e) => setFormData(p => ({ ...p, photo: e.target.value }))} />
+              <textarea className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" placeholder="Visi" value={formData.visi} onChange={(e) => setFormData(p => ({ ...p, visi: e.target.value }))} required />
+              <textarea className="w-full px-4 py-2 bg-gray-700 text-white rounded-xl" placeholder="Misi" value={formData.misi} onChange={(e) => setFormData(p => ({ ...p, misi: e.target.value }))} required />
+              <div className="flex gap-3">
+                <button type="submit" className="bg-emerald-500 text-white px-6 py-2 rounded-xl">{editingId ? '💾 Simpan' : '➕ Tambahkan'}</button>
+                <button type="button" onClick={() => setShowAddForm(false)} className="bg-gray-600 text-white px-6 py-2 rounded-xl">Batal</button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Daftar kandidat */}
+        <div className="bg-gray-800 rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-white mb-4">👥 Daftar Kandidat ({data.candidates.length})</h2>
+          {data.candidates.map(c => (
+            <div key={c.id} className="flex items-center gap-4 bg-gray-700/50 p-3 rounded-xl mb-2">
+              <span className="text-2xl font-bold text-emerald-400">#{c.nomorUrut}</span>
+              <img src={c.photo} className="w-12 h-12 rounded-full object-cover" />
+              <div className="flex-1">
+                <p className="font-bold text-white">{c.name}</p>
+                <p className="text-gray-400 text-sm">{c.visi}</p>
+              </div>
+              <p className="text-emerald-400 font-bold">{c.voteCount || 0} suara</p>
+              <button onClick={() => handleEdit(c)} className="text-blue-400 hover:underline text-sm">✏️</button>
+              <button onClick={() => handleDelete(c.id)} className="text-red-400 hover:underline text-sm">🗑️</button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

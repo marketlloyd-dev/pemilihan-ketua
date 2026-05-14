@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AppContext = createContext();
-
 const API_BASE = '/api/data';
 
 export function AppProvider({ children }) {
@@ -9,10 +8,10 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Fetch data awal
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch(API_BASE);
+      if (!res.ok) throw new Error('API error');
       const json = await res.json();
       setData(json);
     } catch (err) {
@@ -24,34 +23,31 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     fetchData();
-    // Polling setiap 5 detik untuk real-time
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // Simpan data (admin)
   const saveData = async (newData) => {
     try {
       const res = await fetch(API_BASE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-token': 'admin123', // sederhana
+          'x-admin-token': 'admin123',
         },
         body: JSON.stringify(newData),
       });
       if (res.ok) {
-        setData(newData); // optimis update
+        setData(newData);
       }
     } catch (err) {
       console.error('Gagal menyimpan:', err);
     }
   };
 
-  // Login admin (hanya cek username/password statis)
   const loginAdmin = (username, password) => {
     if (username === 'admin' && password === 'admin123') {
-      setCurrentUser({ role: 'admin' });
+      setCurrentUser({ id: 'admin', name: 'Administrator', role: 'admin' });
       return true;
     }
     return false;
@@ -59,7 +55,6 @@ export function AppProvider({ children }) {
 
   const logout = () => setCurrentUser(null);
 
-  // CRUD kandidat dengan save ke server
   const addCandidate = (candidate) => {
     const newData = {
       ...data,
@@ -93,7 +88,6 @@ export function AppProvider({ children }) {
     saveData(newData);
   };
 
-  // Voting (dari halaman scan)
   const castVote = async (candidateId) => {
     try {
       const res = await fetch(`${API_BASE}?action=vote`, {
@@ -103,7 +97,6 @@ export function AppProvider({ children }) {
       });
       const result = await res.json();
       if (res.ok) {
-        // Refresh data
         await fetchData();
         return { success: true, message: result.message };
       } else {

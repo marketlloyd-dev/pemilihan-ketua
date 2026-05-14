@@ -1,4 +1,4 @@
-// In-memory database (akan reset setelah fungsi cold start)
+// In‑memory database
 let db = {
   candidates: [
     {
@@ -21,63 +21,40 @@ let db = {
 };
 
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-token');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // ----- GET: Ambil data -----
-  if (req.method === 'GET') {
-    return res.status(200).json(db);
-  }
+  // GET
+  if (req.method === 'GET') return res.status(200).json(db);
 
-  // ----- POST: Simpan data (admin) -----
+  // POST (admin simpan data)
   if (req.method === 'POST' && !req.query.action) {
     const token = req.headers['x-admin-token'];
-    if (token !== 'admin123') {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    const newData = req.body;
-    if (!newData || !newData.candidates) {
-      return res.status(400).json({ error: 'Data tidak valid' });
-    }
-    db = newData;
+    if (token !== 'admin123') return res.status(401).json({ error: 'Unauthorized' });
+    db = req.body;
     return res.status(200).json({ success: true });
   }
 
-  // ----- POST /api/data?action=vote -----
+  // POST ?action=vote
   if (req.method === 'POST' && req.query.action === 'vote') {
-    const isActive = db.settings.isElectionActive && new Date(db.settings.electionEndTime) > new Date();
-    if (!isActive) {
+    if (!db.settings.isElectionActive || new Date(db.settings.electionEndTime) < new Date())
       return res.status(400).json({ error: 'Pemilihan sudah ditutup' });
-    }
 
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-
-    const alreadyVoted = db.votes.some(v => v.ip === ip);
-    if (alreadyVoted) {
-      return res.status(400).json({ error: 'IP ini sudah memberikan suara' });
-    }
+    if (db.votes.some(v => v.ip === ip))
+      return res.status(400).json({ error: 'IP sudah digunakan' });
 
     const { candidateId } = req.body;
-    if (!candidateId) {
-      return res.status(400).json({ error: 'ID kandidat diperlukan' });
-    }
+    const idx = db.candidates.findIndex(c => c.id === candidateId);
+    if (idx === -1) return res.status(400).json({ error: 'Kandidat tidak ditemukan' });
 
-    const candidateIndex = db.candidates.findIndex(c => c.id === candidateId);
-    if (candidateIndex === -1) {
-      return res.status(400).json({ error: 'Kandidat tidak ditemukan' });
-    }
-
-    db.candidates[candidateIndex].voteCount = (db.candidates[candidateIndex].voteCount || 0) + 1;
+    db.candidates[idx].voteCount = (db.candidates[idx].voteCount || 0) + 1;
     db.votes.push({ candidateId, ip, timestamp: new Date().toISOString() });
-
     return res.status(200).json({ success: true, message: 'Suara berhasil!' });
   }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+  res.status(405).json({ error: 'Method not allowed' });
 }
