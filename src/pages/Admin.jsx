@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import QRCode from 'react-qr-code';
+import { exportToExcel } from '../utils/excelExport';
 
 export default function Admin() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -260,6 +261,12 @@ export default function Admin() {
           <h1 className="text-3xl font-bold text-white">⚙️ Panel Admin</h1>
           <div className="flex gap-3">
             <button onClick={() => { resetForm(); setShowAddForm(true); }} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">+ Tambah</button>
+            <button
+  onClick={() => exportToExcel(data)}
+  className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700"
+>
+  📥 Export Excel
+</button>
             <button onClick={() => setShowQR(true)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">📱 QR</button>
             <button onClick={() => setLoggedIn(false)} className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">Logout</button>
           </div>
