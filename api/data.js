@@ -1,72 +1,81 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+// In-memory database (akan reset setelah fungsi cold start)
+let db = {
+  candidates: [
+    {
+      id: 1,
+      name: 'Andi Pratama',
+      photo: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Andi&backgroundColor=b6e3f4',
+      visi: 'Mewujudkan organisasi yang transparan, inovatif, dan berdaya saing tinggi.',
+      misi: '1. Meningkatkan kualitas program kerja.\n2. Membangun komunikasi dua arah.\n3. Mengembangkan potensi anggota.\n4. Menjalin kerjasama strategis.',
+      voteCount: 0,
+      nomorUrut: 1
+    }
+  ],
+  settings: {
+    electionTitle: 'Pemilihan Ketua Umum 2025',
+    isElectionActive: true,
+    electionEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  votes: [],
+  nextCandidateId: 2
+};
 
 export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-token');
-  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const dbPath = path.join(process.cwd(), 'api', 'database.json');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-  const readDB = async () => {
-    try {
-      const raw = await fs.readFile(dbPath, 'utf-8');
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  };
-
-  const writeDB = async (data) => {
-    try {
-      await fs.writeFile(dbPath, JSON.stringify(data, null, 2));
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  // GET
+  // ----- GET: Ambil data -----
   if (req.method === 'GET') {
-    const db = await readDB();
-    if (!db) return res.status(500).json({ error: 'Database tidak ditemukan' });
     return res.status(200).json(db);
   }
 
-  // POST (simpan data)
+  // ----- POST: Simpan data (admin) -----
   if (req.method === 'POST' && !req.query.action) {
     const token = req.headers['x-admin-token'];
-    if (token !== 'admin123') return res.status(401).json({ error: 'Unauthorized' });
-    const success = await writeDB(req.body);
-    if (!success) return res.status(500).json({ error: 'Gagal menyimpan' });
+    if (token !== 'admin123') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const newData = req.body;
+    if (!newData || !newData.candidates) {
+      return res.status(400).json({ error: 'Data tidak valid' });
+    }
+    db = newData;
     return res.status(200).json({ success: true });
   }
 
-  // Vote
+  // ----- POST /api/data?action=vote -----
   if (req.method === 'POST' && req.query.action === 'vote') {
-    const db = await readDB();
-    if (!db) return res.status(500).json({ error: 'Database tidak tersedia' });
-    
-    if (!db.settings.isElectionActive || new Date(db.settings.electionEndTime) < new Date()) {
+    const isActive = db.settings.isElectionActive && new Date(db.settings.electionEndTime) > new Date();
+    if (!isActive) {
       return res.status(400).json({ error: 'Pemilihan sudah ditutup' });
     }
 
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-    if (db.votes.some(v => v.ip === ip)) {
-      return res.status(400).json({ error: 'IP sudah memberikan suara' });
+
+    const alreadyVoted = db.votes.some(v => v.ip === ip);
+    if (alreadyVoted) {
+      return res.status(400).json({ error: 'IP ini sudah memberikan suara' });
     }
 
     const { candidateId } = req.body;
-    const candidate = db.candidates.find(c => c.id === candidateId);
-    if (!candidate) return res.status(400).json({ error: 'Kandidat tidak ditemukan' });
+    if (!candidateId) {
+      return res.status(400).json({ error: 'ID kandidat diperlukan' });
+    }
 
-    candidate.voteCount = (candidate.voteCount || 0) + 1;
+    const candidateIndex = db.candidates.findIndex(c => c.id === candidateId);
+    if (candidateIndex === -1) {
+      return res.status(400).json({ error: 'Kandidat tidak ditemukan' });
+    }
+
+    db.candidates[candidateIndex].voteCount = (db.candidates[candidateIndex].voteCount || 0) + 1;
     db.votes.push({ candidateId, ip, timestamp: new Date().toISOString() });
 
-    const success = await writeDB(db);
-    if (!success) return res.status(500).json({ error: 'Gagal menyimpan suara' });
     return res.status(200).json({ success: true, message: 'Suara berhasil!' });
   }
 
