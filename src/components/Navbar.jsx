@@ -9,9 +9,10 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 text-white font-bold text-lg">
           <img
-            src="https://pixhost.to/show/7891/726231591_snapinsta-to_623230140_18121716667604427_9093912735534788307_n-removebg-preview.png"
+            src="https://img.pixhost.to/images/7891/726231591_snapinsta-to_623230140_18121716667604427_9093912735534788307_n-removebg-preview.png"
             alt="Logo HIMMAH NW"
-            className="w-10 h-10 object-contain"
+            className="w-10 h-10 object-contain flex-shrink-0"
+            onError={(e) => { e.target.style.display = 'none'; }}
           />
           <span className="hidden sm:block">Muskom HIMMAH NW Kom. STMIK</span>
         </Link>
@@ -23,7 +24,7 @@ export default function Navbar() {
               isActive('/') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-             Beranda
+            🏠 Beranda
           </Link>
           <Link
             to="/kandidat"
@@ -31,7 +32,7 @@ export default function Navbar() {
               isActive('/kandidat') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-             Kandidat
+            👥 Kandidat
           </Link>
           <Link
             to="/dashboard"
@@ -39,7 +40,7 @@ export default function Navbar() {
               isActive('/dashboard') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-             Hasil
+            📊 Hasil
           </Link>
           <Link
             to="/admin"
@@ -47,7 +48,7 @@ export default function Navbar() {
               isActive('/admin') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-             Admin
+            ⚙️ Admin
           </Link>
         </div>
       </div>
