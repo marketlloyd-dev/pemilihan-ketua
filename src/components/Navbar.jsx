@@ -22,12 +22,12 @@ export default function Navbar() {
             🏠 Beranda
           </Link>
           <Link
-            to="/scan"
+            to="/kandidat"
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-              isActive('/scan') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
+              isActive('/kandidat') ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'
             }`}
           >
-            🗳️ Voting
+            👥 Kandidat
           </Link>
           <Link
             to="/dashboard"
