@@ -8,8 +8,12 @@ export default function Navbar() {
     <nav className="bg-gray-900/90 backdrop-blur-md border-b border-emerald-700/30 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 text-white font-bold text-lg">
-          <span className="text-2xl">🗳️</span>
-          <span className="hidden sm:block">HIMMAH NW Kom.STMIK</span>
+          <img
+            src="https://pixhost.to/show/7891/726231591_snapinsta-to_623230140_18121716667604427_9093912735534788307_n-removebg-preview.png"
+            alt="Logo HIMMAH NW"
+            className="w-10 h-10 object-contain"
+          />
+          <span className="hidden sm:block">Muskom HIMMAH NW Kom. STMIK</span>
         </Link>
 
         <div className="flex items-center gap-2">
