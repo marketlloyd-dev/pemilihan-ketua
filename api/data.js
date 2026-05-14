@@ -51,23 +51,18 @@ export default async function handler(req, res) {
     const endTime = new Date(db.settings.electionEndTime);
     const isActive = db.settings.isElectionActive && now < endTime;
 
-    // 1. Cek apakah pemilihan aktif
+    // 1. Jika pemilihan tidak aktif, tolak (tidak perlu cek cookie)
     if (!isActive) {
-      // Jika pemilihan tidak aktif, hapus cookie voted_token agar tidak memblokir
-      res.setHeader(
-        'Set-Cookie',
-        'voted_token=; Path=/; Max-Age=0; SameSite=Lax; Secure; HttpOnly'
-      );
       return json(res, 400, { error: 'Pemilihan sudah ditutup' });
     }
 
-    // 2. Baca cookie voted_token dari header
+    // 2. Baca cookie voted_token
     const cookieHeader = req.headers.cookie || '';
     const cookies = Object.fromEntries(
       cookieHeader.split('; ').map(c => c.split('='))
     );
 
-    // 3. Jika cookie voted_token sudah ada, tolak
+    // 3. Cek cookie hanya jika pemilihan aktif
     if (cookies.voted_token) {
       return json(res, 400, { error: 'Anda sudah memberikan suara (terdeteksi dari cookie)' });
     }
@@ -85,10 +80,13 @@ export default async function handler(req, res) {
       timestamp: now.toISOString()
     });
 
-    // 5. Set cookie tahan 1 tahun (hanya berlaku selama pemilihan masih berjalan)
+    // 5. Hitung selisih detik ke waktu berakhir
+    const remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
+
+    // 6. Set cookie dengan Max-Age sesuai sisa waktu
     res.setHeader(
       'Set-Cookie',
-      'voted_token=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure; HttpOnly'
+      `voted_token=1; Path=/; Max-Age=${remainingSeconds}; SameSite=Lax; Secure; HttpOnly`
     );
 
     return json(res, 200, { success: true, message: 'Suara berhasil!' });
